@@ -1,0 +1,20 @@
+// src/constants/specialties.js
+export const SPECIALTIES = [
+  'Medicina general / familiar',
+  'Medicina interna',
+  'Pediatría',
+  'Ginecología y obstetricia',
+  'Cardiología',
+  'Dermatología',
+  'Oftalmología',
+  'Otorrinolaringología (ORL)',
+  'Traumatología y ortopedia',
+  'Cirugía general',
+  'Anestesiología',
+  'Psiquiatría',
+  'Neurología',
+  'Urología',
+  'Gastroenterología',
+  'Neumología (pulmonar)',
+  'Endocrinología',
+];

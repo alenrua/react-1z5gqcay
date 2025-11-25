@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda Médica</title>
+
+    <!-- ✅ TAILWIND CDN (activa los estilos visuales) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2563eb", // Azul base
+              secondary: "#1e293b", // Gris oscuro
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Fuente opcional para mejor estética -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f9fafb;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Aquí React montará tu aplicación -->
+    <div id="root"></div>
+  </body>
+</html>
