@@ -665,6 +665,8 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     if (!d) return;
     const srcDoctor = d.doctor;
     const conflicts = d.conflicts || [];
+    let appliedReassignments = 0;
+    const skippedByLimit = new Set();
 
     setSlotsByDoctor((prev) => {
       const next = { ...prev };
@@ -679,6 +681,17 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
         if (c.suggestion && c.suggestion.doctor && c.suggestion.room) {
           const target = c.suggestion.doctor;
           const tArr = [...(next[target] || [])];
+          const { startISO, endISO } = getWeekBounds(c.date);
+          const weeklyLoad = tArr
+            .filter((s) => s.date >= startISO && s.date <= endISO)
+            .reduce((acc, s) => acc + getSlotLength(s.start, s.end), 0);
+          const slotSize = getSlotLength(c.start, c.end);
+
+          if (weeklyLoad + slotSize > WEEKLY_MAX_SLOTS) {
+            skippedByLimit.add(target);
+            continue;
+          }
+
           tArr.push({
             date: c.date,
             start: c.start,
@@ -686,6 +699,7 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
             room: c.suggestion.room,
           });
           next[target] = tArr;
+          appliedReassignments += 1;
         }
       }
       return next;
@@ -695,12 +709,17 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
       ...personalBlocks,
       { cc: d.cc, type: d.type, start: d.start, end: d.end },
     ]);
-    const reassignCount = (d.conflicts || []).filter(
-      (c) => c.suggestion
-    ).length;
-    const cancelCount = (d.conflicts || []).length - reassignCount;
+    const totalConflicts = conflicts.length;
+    const cancelCount = totalConflicts - appliedReassignments;
+    const skipMsg =
+      skippedByLimit.size > 0
+        ? ` No se reasignaron algunas franjas por superar el límite semanal de 40 horas para: ${Array.from(
+            skippedByLimit
+          ).join(', ')}.`
+        : '';
     alert(
-      `Bloqueo aplicado. Reasignadas ${reassignCount} franja(s); canceladas ${cancelCount}.`
+      `Bloqueo aplicado. Reasignadas ${appliedReassignments} franja(s); canceladas ${cancelCount}.` +
+        skipMsg
     );
     setConfirmPersonal({ show: false, data: null });
   };
