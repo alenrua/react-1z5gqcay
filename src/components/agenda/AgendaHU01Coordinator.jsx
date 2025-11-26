@@ -278,11 +278,13 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     return false;
   };
 
+  const validEnd = (t) => TIME_SLOTS.includes(t) || t === '18:00';
+
   const rangeAllFree = (dateISO, start, end) => {
     if (blockedDates.includes(dateISO)) return false;
     const s = timeToIdx(start);
     const e = timeToIdx(end);
-    if (!(TIME_SLOTS.includes(start) && TIME_SLOTS.includes(end))) return false;
+    if (!(TIME_SLOTS.includes(start) && validEnd(end))) return false;
     if (e <= s) return false;
     for (let i = s; i < e; i++) {
       const t = TIME_SLOTS[i];
@@ -310,7 +312,7 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     if (blockedDates.includes(dateISO)) return false;
     const s = timeToIdx(start);
     const e = timeToIdx(end);
-    if (!(TIME_SLOTS.includes(start) && TIME_SLOTS.includes(end))) return false;
+    if (!(TIME_SLOTS.includes(start) && validEnd(end))) return false;
     if (e <= s) return false;
     for (let i = s; i < e; i++) {
       const t = TIME_SLOTS[i];
@@ -437,7 +439,7 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     const a = Math.min(drag.startIdx, drag.endIdx);
     const b = Math.max(drag.startIdx, drag.endIdx);
     const start = idxToTime(a);
-    const end = idxToTime(Math.min(b + 1, TIME_SLOTS.length - 1));
+    const end = cellEnd(TIME_SLOTS[Math.min(b, TIME_SLOTS.length - 1)]);
     if (canCreateSlot(drag.date, start, end))
       setSelectedRange({ date: drag.date, start, end });
     else setSelectedRange(null);

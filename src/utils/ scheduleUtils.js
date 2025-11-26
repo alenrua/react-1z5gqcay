@@ -18,6 +18,8 @@ export const getSlotAt = (slotsByDoctor, doctorName, dateISO, t) => {
 };
 
 // Rango completo libre (para ese doctor y fecha)
+const validEnd = (t) => TIME_SLOTS.includes(t) || t === '18:00';
+
 export const rangeAllFree = (
   { slotsByDoctor, blockedDates },
   doctorName,
@@ -29,7 +31,7 @@ export const rangeAllFree = (
   if (blockedDates.includes(dateISO)) return false;
   const s = timeToIdx(start);
   const e = timeToIdx(end);
-  if (!(TIME_SLOTS.includes(start) && TIME_SLOTS.includes(end))) return false;
+  if (!(TIME_SLOTS.includes(start) && validEnd(end))) return false;
   if (e <= s) return false;
   for (let i = s; i < e; i++) {
     const t = TIME_SLOTS[i];
