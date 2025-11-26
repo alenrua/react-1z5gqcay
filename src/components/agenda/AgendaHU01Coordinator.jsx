@@ -666,6 +666,28 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     const srcDoctor = d.doctor;
     const conflicts = d.conflicts || [];
 
+    const prospectiveLoads = new Map();
+    for (const c of conflicts) {
+      if (!c.suggestion || !c.suggestion.doctor || !c.suggestion.room) continue;
+
+      const target = c.suggestion.doctor;
+      const { startISO, endISO } = getWeekBounds(c.date);
+      const key = `${target}-${startISO}`;
+      const baseLoad = prospectiveLoads.has(key)
+        ? prospectiveLoads.get(key)
+        : getWeeklySlots(target, startISO, endISO);
+      const nextLoad = baseLoad + getSlotLength(c.start, c.end);
+
+      if (nextLoad > WEEKLY_MAX_SLOTS) {
+        alert(
+          `${target} superará el límite semanal de 40 horas con esta reasignación. Ajusta las franjas antes de continuar.`
+        );
+        return;
+      }
+
+      prospectiveLoads.set(key, nextLoad);
+    }
+
     setSlotsByDoctor((prev) => {
       const next = { ...prev };
       const srcArr = [...(next[srcDoctor] || [])];
