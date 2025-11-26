@@ -87,9 +87,23 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
 
   // Fecha / calendario
   const today = new Date();
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const yearOptions = useMemo(
+    () => [currentYear - 1, currentYear, currentYear + 1],
+    [currentYear]
+  );
+
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState(today);
+
+  const setMonthYear = (newYear, newMonth) => {
+    const safeMonth = Math.min(11, Math.max(0, newMonth));
+    const base = new Date(newYear, safeMonth, 1);
+    setYear(base.getFullYear());
+    setMonth(base.getMonth());
+    setSelectedDay(base);
+  };
 
   const monthMatrix = useMemo(() => {
     const first = new Date(year, month, 1);
@@ -130,9 +144,27 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
 
   const goToday = () => {
     const d = new Date();
-    setSelectedDay(d);
-    setYear(d.getFullYear());
-    setMonth(d.getMonth());
+    setMonthYear(d.getFullYear(), d.getMonth());
+  };
+
+  useEffect(() => {
+    const d = new Date(selectedDay);
+    if (d.getFullYear() !== year || d.getMonth() !== month) {
+      setYear(d.getFullYear());
+      setMonth(d.getMonth());
+    }
+  }, [selectedDay, year, month]);
+
+  const handleMonthChange = (value) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return;
+    setMonthYear(year, parsed);
+  };
+
+  const handleYearChange = (value) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return;
+    setMonthYear(parsed, month);
   };
 
   // Filtros
@@ -1187,6 +1219,50 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
                   {docsForSpec.map((d) => (
                     <option key={d} value={d}>
                       {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs mb-1" htmlFor="month-select">
+                  Mes
+                </label>
+                <select
+                  id="month-select"
+                  value={month}
+                  onChange={(e) => handleMonthChange(e.target.value)}
+                  className={`text-sm rounded-lg border px-3 py-2 ${
+                    dark
+                      ? 'bg-slate-900 border-slate-600'
+                      : 'bg-white border-gray-300'
+                  }`}
+                >
+                  {MONTHS.map((m, idx) => (
+                    <option key={m} value={idx}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs mb-1" htmlFor="year-input">
+                  Año
+                </label>
+                <select
+                  id="year-input"
+                  value={year}
+                  onChange={(e) => handleYearChange(e.target.value)}
+                  className={`text-sm rounded-lg border px-3 py-2 ${
+                    dark
+                      ? 'bg-slate-900 border-slate-600'
+                      : 'bg-white border-gray-300'
+                  }`}
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
                     </option>
                   ))}
                 </select>
