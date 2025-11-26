@@ -12,6 +12,23 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+import { DAYS, MONTHS } from '../../constants/dates';
+import {
+  ALL_DOCTORS,
+  DOCTOR_CC,
+  DOCTORS,
+  SPECIALTY_OF_DOCTOR,
+} from '../../constants/doctors';
+import { ROOMS } from '../../constants/rooms';
+import { SPECIALTIES } from '../../constants/specialties';
+import {
+  TIME_SLOTS,
+  cellEnd,
+  fmtTime12,
+  idxToTime,
+  overlaps,
+  timeToIdx,
+} from '../../utils/timeUtils';
 
 import CalendarSidebar from './CalendarSidebar';
 import MonthlySummaryCard from './MonthlySummaryCard';
@@ -25,139 +42,14 @@ import EditSlotModal from '../modals/EditSlotModal';
 import GeneralBlockModal from '../modals/GeneralBlockModal';
 
 // ================== Datos base ==================
-const DAYS = [
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-  'Domingo',
-];
-
-const MONTHS = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
-
-const TIME_SLOTS = Array.from({ length: 20 }, (_, i) => {
-  const h = Math.floor(i / 2) + 8;
-  const m = i % 2 ? '30' : '00';
-  return `${String(h).padStart(2, '0')}:${m}`;
-});
-
 const pill = {
   FREE: 'bg-green-600 text-white',
   BUSY: 'bg-blue-600 text-white',
   BLOCKED: 'bg-red-600 text-white',
 };
 
-// Especialidades
-const SPECIALTIES = [
-  'Medicina general / familiar',
-  'Medicina interna',
-  'Pediatría',
-  'Ginecología y obstetricia',
-  'Cardiología',
-  'Dermatología',
-  'Oftalmología',
-  'Otorrinolaringología (ORL)',
-  'Traumatología y ortopedia',
-  'Cirugía general',
-  'Anestesiología',
-  'Psiquiatría',
-  'Neurología',
-  'Urología',
-  'Gastroenterología',
-  'Neumología (pulmonar)',
-  'Endocrinología',
-];
-
-const DOCTORS = {
-  'Medicina general / familiar': ['Dr. Sergio Cárdenas', 'Dra. Paula Medina'],
-  'Medicina interna': ['Dra. Laura Ríos', 'Dr. Jorge Prieto'],
-  Pediatría: ['Dr. Andrés Ramírez', 'Dra. Mariana Torres'],
-  'Ginecología y obstetricia': ['Dra. Sofía Herrera', 'Dr. Camilo Duarte'],
-  Cardiología: ['Dr. Julián Pérez', 'Dra. Natalia Cruz'],
-  Dermatología: ['Dr. Mateo Vega', 'Dra. Ana Robledo'],
-  Oftalmología: ['Dr. Felipe Mora', 'Dra. Isabel Peña'],
-  'Otorrinolaringología (ORL)': ['Dr. Dario León', 'Dra. Ángela Barrios'],
-  'Traumatología y ortopedia': ['Dr. Mauricio Castro', 'Dra. Lina Ocampo'],
-  'Cirugía general': ['Dr. Esteban Ríos', 'Dra. Catalina Nieto'],
-  Anestesiología: ['Dr. Ricardo Gil', 'Dra. Viviana Soto'],
-  Psiquiatría: ['Dr. Samuel Ortega', 'Dra. Patricia Díaz'],
-  Neurología: ['Dr. Andrés Pardo', 'Dra. Juliana Rincón'],
-  Urología: ['Dr. Henry Bernal', 'Dra. Paulina Rivas'],
-  Gastroenterología: ['Dr. Luis Beltrán', 'Dra. Marcela Pino'],
-  'Neumología (pulmonar)': ['Dr. Oscar Muñoz', 'Dra. Karina Borda'],
-  Endocrinología: ['Dr. Iván Acosta', 'Dra. Verónica Ruiz'],
-};
-
-const DOCTOR_CC = {
-  'Dr. Sergio Cárdenas': '1000000001',
-  'Dra. Paula Medina': '1000000002',
-  'Dra. Laura Ríos': '1000000003',
-  'Dr. Jorge Prieto': '1000000004',
-  'Dr. Andrés Ramírez': '1029673456',
-  'Dra. Mariana Torres': '1098765432',
-  'Dra. Sofía Herrera': '1000000005',
-  'Dr. Camilo Duarte': '1000000006',
-  'Dr. Julián Pérez': '1011122233',
-  'Dra. Natalia Cruz': '1000000007',
-  'Dr. Mateo Vega': '1000000008',
-  'Dra. Ana Robledo': '1000000009',
-  'Dr. Felipe Mora': '1000000010',
-  'Dra. Isabel Peña': '1000000011',
-  'Dr. Dario León': '1000000012',
-  'Dra. Ángela Barrios': '1000000013',
-  'Dr. Mauricio Castro': '1000000014',
-  'Dra. Lina Ocampo': '1000000015',
-  'Dr. Esteban Ríos': '1000000016',
-  'Dra. Catalina Nieto': '1000000017',
-  'Dr. Ricardo Gil': '1000000018',
-  'Dra. Viviana Soto': '1000000019',
-  'Dr. Samuel Ortega': '1000000020',
-  'Dra. Patricia Díaz': '1000000021',
-  'Dr. Andrés Pardo': '1000000022',
-  'Dra. Juliana Rincón': '1000000023',
-  'Dr. Henry Bernal': '1000000024',
-  'Dra. Paulina Rivas': '1000000025',
-  'Dr. Luis Beltrán': '1000000026',
-  'Dra. Marcela Pino': '1000000027',
-  'Dr. Oscar Muñoz': '1000000028',
-  'Dra. Karina Borda': '1000000029',
-  'Dr. Iván Acosta': '1000000030',
-  'Dra. Verónica Ruiz': '1000000031',
-};
-
-const ROOMS = [
-  'C-101',
-  'C-102',
-  'C-103',
-  'C-104',
-  'C-105',
-  'C-106',
-  'C-107',
-  'C-108',
-];
-
-// mapa doctor -> especialidad (para métricas)
-const DOCTOR_SPECIALTY = {};
-Object.entries(DOCTORS).forEach(([spec, docs]) => {
-  docs.forEach((d) => {
-    DOCTOR_SPECIALTY[d] = spec;
-  });
-});
+const REFERENCE_MONTHLY_SLOTS = 320; // 160 horas mensuales en bloques de 30 minutos
+const WEEKLY_MAX_SLOTS = 80; // 40 horas semanales en bloques de 30 minutos
 
 // ================== Utilidades ==================
 const fmtDateLong = (iso) => {
@@ -171,30 +63,6 @@ const fmtDateLong = (iso) => {
     return iso;
   }
 };
-
-const fmtTime12 = (hhmm) => {
-  const [h, m] = (hhmm || '08:00').split(':');
-  let H = Number(h);
-  const ampm = H >= 12 ? 'PM' : 'AM';
-  H = H % 12;
-  if (H === 0) H = 12;
-  return `${H}:${m} ${ampm}`;
-};
-
-const timeToIdx = (t) => {
-  const [H, M] = t.split(':').map(Number);
-  return (H - 8) * 2 + (M === 30 ? 1 : 0);
-};
-
-const idxToTime = (i) =>
-  TIME_SLOTS[Math.max(0, Math.min(TIME_SLOTS.length - 1, i))];
-
-const overlaps = (aS, aE, bS, bE) =>
-  timeToIdx(aS) < timeToIdx(bE) && timeToIdx(bS) < timeToIdx(aE);
-
-const cellEnd = (t) =>
-  TIME_SLOTS[Math.min(TIME_SLOTS.indexOf(t) + 1, TIME_SLOTS.length - 1)] ||
-  '18:00';
 
 // ================== Componente principal ==================
 export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
@@ -287,7 +155,7 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
   const [generalBlocks, setGeneralBlocks] = useState([]);
   const [blockedDates] = useState([]);
 
-  const allDoctors = Object.values(DOCTORS).flat();
+  const allDoctors = ALL_DOCTORS;
 
   // Tiempo / validación
   const isPastWeek = (dateISO) => {
@@ -297,6 +165,9 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     t.setHours(0, 0, 0, 0);
     return d.getTime() < t.getTime();
   };
+
+  const getSlotLength = (start, end) =>
+    Math.max(0, timeToIdx(end || start) - timeToIdx(start || '08:00'));
 
   const isBusy = (dateISO, t) =>
     getSlotsFor(doctor).some(
@@ -334,6 +205,24 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
       return false;
     });
   };
+
+  const getWeekBounds = (dateISO) => {
+    const d = new Date(dateISO);
+    const off = (d.getDay() + 6) % 7;
+    const start = new Date(d);
+    start.setDate(d.getDate() - off);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return {
+      startISO: start.toISOString().slice(0, 10),
+      endISO: end.toISOString().slice(0, 10),
+    };
+  };
+
+  const getWeeklySlots = (doctorName, startISO, endISO) =>
+    getSlotsFor(doctorName)
+      .filter((s) => s.date >= startISO && s.date <= endISO)
+      .reduce((acc, s) => acc + getSlotLength(s.start, s.end), 0);
 
   const isRoomTakenByOtherDoctor = (
     room,
@@ -573,6 +462,15 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
         );
       return alert(
         'No es posible crear la franja: semana pasada, bloqueos, solapes o bloques inválidos.'
+      );
+    }
+
+    const { startISO, endISO } = getWeekBounds(date);
+    const weeklyLoad = getWeeklySlots(doctor, startISO, endISO);
+    const newSlotSize = getSlotLength(form.start, form.end);
+    if (weeklyLoad + newSlotSize > WEEKLY_MAX_SLOTS) {
+      return alert(
+        'Se supera el límite de 40 horas semanales (80 franjas de 30 minutos). Ajusta la franja para no exceder el máximo recomendado.'
       );
     }
 
@@ -943,7 +841,7 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
     days.forEach((dateISO) => {
       TIME_SLOTS.forEach((t) => {
         Object.entries(slotsByDoctor).forEach(([doc, arr]) => {
-          const specDoc = DOCTOR_SPECIALTY[doc];
+          const specDoc = SPECIALTY_OF_DOCTOR[doc];
           if (!specDoc) return;
           const idxSpec = indexBySpec[specDoc];
           if (idxSpec == null) return;
@@ -1048,8 +946,12 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
       });
     });
 
-    const total = assigned + blockedPersonal + blockedGeneral + free;
-    const pct = total > 0 ? Math.round((assigned * 100) / total) : 0;
+    const referenceSlots = REFERENCE_MONTHLY_SLOTS;
+    const pct = referenceSlots > 0 ? Math.round((assigned * 100) / referenceSlots) : 0;
+    const available = Math.max(
+      0,
+      referenceSlots - assigned - blockedPersonal - blockedGeneral
+    );
 
     let level = null;
     if (assigned === 0 && blockedPersonal === 0 && blockedGeneral === 0) {
@@ -1062,7 +964,16 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
       level = 'LOW';
     }
 
-    return { assigned, blockedPersonal, blockedGeneral, free, total, pct, level };
+    return {
+      assigned,
+      blockedPersonal,
+      blockedGeneral,
+      free,
+      pct,
+      level,
+      referenceSlots,
+      available,
+    };
   }, [ready, doctor, year, month, slotsByDoctor, personalBlocks, generalBlocks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -1075,12 +986,48 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
 
     if (lastOccLevel && lastOccLevel !== monthlyMetrics.level) {
       setOccAlert({
+        previous: lastOccLevel,
         level: monthlyMetrics.level,
         pct: monthlyMetrics.pct,
       });
     }
     setLastOccLevel(monthlyMetrics.level);
   }, [monthlyMetrics, doctor, lastOccLevel]);
+
+  const weekBounds = useMemo(() => {
+    const start = weekDays[0];
+    const end = weekDays[6];
+    return {
+      startISO: start.toISOString().slice(0, 10),
+      endISO: end.toISOString().slice(0, 10),
+    };
+  }, [weekDays]);
+
+  const weeklyLoadSlots = useMemo(() => {
+    if (!doctor || !weekBounds?.startISO) return 0;
+    return getWeeklySlots(doctor, weekBounds.startISO, weekBounds.endISO);
+  }, [doctor, weekBounds, slotsByDoctor]);
+
+  const weeklyLoadHours = Math.round((weeklyLoadSlots / 2) * 10) / 10;
+
+  const weeklyStatus = (() => {
+    if (weeklyLoadSlots >= WEEKLY_MAX_SLOTS) return 'LÍMITE EXCEDIDO';
+    if (weeklyLoadSlots >= WEEKLY_MAX_SLOTS * 0.85) return 'Cerca del límite';
+    return 'Dentro del límite recomendado';
+  })();
+
+  const weeklyStatusColor =
+    weeklyLoadSlots >= WEEKLY_MAX_SLOTS
+      ? dark
+        ? 'text-red-300'
+        : 'text-red-600'
+      : weeklyLoadSlots >= WEEKLY_MAX_SLOTS * 0.85
+      ? dark
+        ? 'text-amber-200'
+        : 'text-amber-600'
+      : dark
+      ? 'text-emerald-200'
+      : 'text-emerald-700';
 
   // ================== UI ==================
   const weekLabel = (() => {
@@ -1350,6 +1297,29 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
             )
           ) : (
             <>
+              <div className={`rounded-xl border px-4 py-3 ${themeCard}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Carga semanal del médico</p>
+                    <p className={`text-xs ${themeMuted}`}>
+                      Total de horas asignadas en la semana seleccionada.
+                      Límite recomendado: 40 horas (80 franjas de 30 minutos).
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold">
+                      {weeklyLoadHours} h / 40 h
+                    </p>
+                    <p className={`text-xs ${themeMuted}`}>
+                      {weeklyLoadSlots} franjas de 30 minutos
+                    </p>
+                    <p className={`text-xs font-medium mt-1 ${weeklyStatusColor}`}>
+                      {weeklyStatus}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <WeeklyGrid
                 dark={dark}
                 themeCard={themeCard}
@@ -1488,10 +1458,19 @@ export default function AgendaHU01Coordinator({ role = 'coordinator' }) {
                 {occAlert.level === 'HIGH'
                   ? 'ALTA'
                   : occAlert.level === 'MEDIUM'
-                  ? 'MEDIA'
+                  ? 'MODERADA'
                   : 'BAJA'}
               </strong>{' '}
-              ({occAlert.pct}%).
+              ({occAlert.pct}%).{' '}
+              {occAlert?.previous && (
+                <span className={themeMuted}>
+                  Antes: {occAlert.previous === 'HIGH'
+                    ? 'Alta'
+                    : occAlert.previous === 'MEDIUM'
+                    ? 'Moderada'
+                    : 'Baja'}
+                </span>
+              )}
             </p>
             <button
               onClick={() => setOccAlert(null)}

@@ -14,6 +14,16 @@ export default function MonthlySummaryCard({
 }) {
   const monthName = MONTHS[month];
 
+  if (role !== 'coordinator') {
+    return (
+      <div className={`mt-4 rounded-xl border p-4 text-sm ${themeCard}`}>
+        <p className={themeMuted}>
+          Resumen disponible solo para el perfil de coordinador.
+        </p>
+      </div>
+    );
+  }
+
   if (!ready || !doctor || !monthlyMetrics) {
     return (
       <div className={`mt-4 rounded-xl border p-4 text-sm ${themeCard}`}>
@@ -35,23 +45,29 @@ export default function MonthlySummaryCard({
     available,
   } = monthlyMetrics;
 
-  const levelLabel =
-    level === 'HIGH' ? 'Carga alta'
-      : level === 'MEDIUM' ? 'Carga media'
-      : 'Carga baja';
+  const levelLabel = !level
+    ? 'Sin datos'
+    : level === 'HIGH'
+    ? 'Carga alta'
+    : level === 'MEDIUM'
+    ? 'Carga moderada'
+    : 'Carga baja';
 
-  const levelColor =
-    level === 'HIGH'
-      ? dark
-        ? 'bg-red-600 text-red-50'
-        : 'bg-red-100 text-red-700'
-      : level === 'MEDIUM'
-      ? dark
-        ? 'bg-amber-600 text-amber-50'
-        : 'bg-amber-100 text-amber-700'
-      : dark
-      ? 'bg-emerald-700 text-emerald-50'
-      : 'bg-emerald-100 text-emerald-700';
+  const levelColor = !level
+    ? dark
+      ? 'bg-slate-700 text-slate-100'
+      : 'bg-gray-100 text-gray-700'
+    : level === 'HIGH'
+    ? dark
+      ? 'bg-red-600 text-red-50'
+      : 'bg-red-100 text-red-700'
+    : level === 'MEDIUM'
+    ? dark
+      ? 'bg-amber-600 text-amber-50'
+      : 'bg-amber-100 text-amber-700'
+    : dark
+    ? 'bg-emerald-700 text-emerald-50'
+    : 'bg-emerald-100 text-emerald-700';
 
   return (
     <div className={`mt-4 rounded-xl border p-4 text-sm ${themeCard}`}>
@@ -65,7 +81,7 @@ export default function MonthlySummaryCard({
       <p className={`text-xs mb-4 ${themeMuted}`}>
         La siguiente información ofrece una visión integral de las franjas
         asignadas y bloqueos del médico durante el mes, útil para ajustar su
-        agenda.
+        agenda y disponibilidad.
       </p>
 
       {/* Totales */}
@@ -85,7 +101,6 @@ export default function MonthlySummaryCard({
         </div>
         <div>
           <p className={`text-xs ${themeMuted}`}>Total de franjas disponibles</p>
-          {/* ahora usamos available, NO free */}
           <p className="text-base font-semibold">{available}</p>
         </div>
       </div>
@@ -96,7 +111,7 @@ export default function MonthlySummaryCard({
           Porcentaje de ocupación del mes
           <br />
           <span className="italic">
-            (franjas asignadas sobre franjas de referencia sin bloqueos)
+            (franjas asignadas ÷ 320 franjas de referencia)
           </span>
         </p>
 
@@ -118,6 +133,12 @@ export default function MonthlySummaryCard({
           </span>
         </div>
       </div>
+
+      {!assigned && !blockedPersonal && !blockedGeneral && (
+        <p className={`text-xs mb-3 ${themeMuted}`}>
+          Sin programación para este periodo.
+        </p>
+      )}
 
       <p className={`text-[11px] leading-relaxed ${themeMuted}`}>
         Los datos se actualizan automáticamente cuando se agregan, modifican o

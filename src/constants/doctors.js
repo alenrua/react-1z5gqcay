@@ -65,4 +65,7 @@ export const ALL_DOCTORS = Object.values(DOCTORS).flat();
 
 // Mapa rápido doctor -> especialidad
 export const SPECIALTY_OF_DOCTOR = ALL_DOCTORS.reduce((acc, name) => {
-  const spec = SPEC
+  const specialty = SPECIALTIES.find((spec) => (DOCTORS[spec] || []).includes(name));
+  if (specialty) acc[name] = specialty;
+  return acc;
+}, {});
